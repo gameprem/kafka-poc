@@ -6,15 +6,16 @@ services:
     container_name: kafka
     ports:
       - "9092:9092"
+      - "29092:29092"   # <-- เปิดเพิ่มสำหรับ NestJS
       - "9093:9093"
       - "9101:9101"  # JMX Exporter (metrics)
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
@@ -57,6 +58,19 @@ services:
       - grafana-storage:/var/lib/grafana
     depends_on:
       - prometheus
+  emqx:
+    image: emqx/emqx:latest
+    container_name: emqx
+    ports:
+      - "1883:1883"   # MQTT
+      - "8883:8883"   # MQTT over SSL
+      - "8083:8083"   # WebSocket
+      - "18083:18083" # Dashboard UI
+    environment:
+      - EMQX_NAME=emqx
+      - EMQX_ALLOW_ANONYMOUS=true
+      - EMQX_DASHBOARD__DEFAULT_USER__LOGIN=admin
+      - EMQX_DASHBOARD__DEFAULT_USER__PASSWORD=admin
 
 volumes:
   grafana-storage:
