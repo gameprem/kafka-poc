@@ -6,9 +6,9 @@ services:
     container_name: kafka
     ports:
       - "9092:9092"
-      - "29092:29092"   # <-- เปิดเพิ่มสำหรับ NestJS
+      - "29092:29092"
       - "9093:9093"
-      - "9101:9101"  # JMX Exporter (metrics)
+      - "9101:9101"
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
@@ -29,7 +29,7 @@ services:
     image: provectuslabs/kafka-ui:latest
     container_name: kafka-ui
     ports:
-      - "8080:8080"
+      - "8081:8080"
     environment:
       - KAFKA_CLUSTERS_0_NAME=Local Kafka
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
@@ -58,19 +58,21 @@ services:
       - grafana-storage:/var/lib/grafana
     depends_on:
       - prometheus
-  emqx:
-    image: emqx/emqx:latest
-    container_name: emqx
+
+  nanomq:
+    image: emqx/nanomq:latest
+    container_name: nanomq
     ports:
-      - "1883:1883"   # MQTT
-      - "8883:8883"   # MQTT over SSL
-      - "8083:8083"   # WebSocket
-      - "18083:18083" # Dashboard UI
+      - "1883:1883"
+      - "8083:8083" # WebSocket (optional)
     environment:
-      - EMQX_NAME=emqx
-      - EMQX_ALLOW_ANONYMOUS=true
-      - EMQX_DASHBOARD__DEFAULT_USER__LOGIN=admin
-      - EMQX_DASHBOARD__DEFAULT_USER__PASSWORD=admin
+      - NANOMQ_LOG_LEVEL=DEBUG
+      - NANOMQ_MQTT__LISTENER=0.0.0.0:1883
+      - NANOMQ_KAFKA__ENABLE=true
+      - NANOMQ_KAFKA__BROKER=kafka:9092
+      - NANOMQ_KAFKA__TOPIC=mqtt_topic
+    depends_on:
+      - kafka
 
 volumes:
   grafana-storage:
